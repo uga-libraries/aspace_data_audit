@@ -1,5 +1,6 @@
 import unittest
 
+import mysql.connector
 import openpyxl
 
 from ASpace_Data_Audit import *
@@ -44,6 +45,9 @@ class SpreadsheetTests(unittest.TestCase):
 class SQLTests(unittest.TestCase):
 
     def test_db_connection(self):
+        self.db_connect, self.db_cursor = connect_db()
+        self.assertIsNotNone(self.db_connect)
+        self.assertIsNotNone(self.db_cursor)
         pass
 
     def test_query_db(self):
