@@ -92,8 +92,8 @@ class AuditFunctionsTests(unittest.TestCase):
         self.db_connect, self.db_cursor = connect_db()
         results = query_database(self.db_connect, self.db_cursor, test_statement)
         updated_booleans = update_booleans(results)
-        print(results[1][2])
-        print(updated_booleans[1][2])
+        # print(results[1][2])
+        # print(updated_booleans[1][2])
         self.assertIsNot(results[1][2], updated_booleans[1][2])
         self.assertIsInstance(updated_booleans[1][2], bool)
 
@@ -121,7 +121,12 @@ class AuditFunctionsTests(unittest.TestCase):
         pass
 
     def test_check_url(self):
-        pass
+        test_good_url = 'https://www.libs.uga.edu/'
+        test_bad_url = 'http://www.cviog.uga.edu/about/chapel/history.php'
+        good_response_code = check_url(test_good_url)
+        bad_response_code = check_url(test_bad_url)
+        self.assertIsNone(good_response_code)
+        self.assertIsNotNone(bad_response_code)
 
     def test_run_audit(self):
         # no idea how to test this, it runs the whole suit of checks on our data, but no stdout - just writing to
