@@ -36,7 +36,6 @@ class SpreadsheetTests(unittest.TestCase):
         self.test_workbook, self.test_spreadsheet_filepath = generate_spreadsheet()
         self.assertIsInstance(self.test_workbook, openpyxl.Workbook)
         self.assertIsInstance(self.test_spreadsheet_filepath, str)
-        pass
 
     def test_write_headers(self):
         pass
@@ -48,10 +47,13 @@ class SQLTests(unittest.TestCase):
         self.db_connect, self.db_cursor = connect_db()
         self.assertIsNotNone(self.db_connect)
         self.assertIsNotNone(self.db_cursor)
-        pass
 
     def test_query_db(self):
-        pass
+        test_statement = ('SELECT name, username FROM user')
+        self.db_connect, self.db_cursor = connect_db()
+        results = query_database(self.db_connect, self.db_cursor, test_statement)
+        self.assertIsNotNone(results)
+        self.assertIsInstance(results, list)
 
     def test_run_query(self):
         # use https://stackoverflow.com/a/34738440 to capture stdout print statements for checking
@@ -72,10 +74,28 @@ class AuditFunctionsTests(unittest.TestCase):
         pass
 
     def test_standardize_resids(self):
-        pass
+        test_statement = ('SELECT repo.name AS Repository, resource.identifier AS Resource_ID  '
+                          'FROM repository AS repo '
+                          'JOIN resource ON repo.id = resource.repo_id ')
+        self.db_connect, self.db_cursor = connect_db()
+        results = query_database(self.db_connect, self.db_cursor, test_statement)
+        updated_resids = standardize_resids(results)
+        # print(results[1][1])
+        # print(updated_resids[1][1])
+        self.assertNotEqual(results[1][1], updated_resids[1][1])
+        self.assertIsInstance(updated_resids[1][1], str)
+        self.assertNotIn("Null", updated_resids[1][1])
 
     def test_update_booleans(self):
-        pass
+        test_statement = ('SELECT name, username, is_system_user AS System_Administrator '
+                          'FROM user')
+        self.db_connect, self.db_cursor = connect_db()
+        results = query_database(self.db_connect, self.db_cursor, test_statement)
+        updated_booleans = update_booleans(results)
+        print(results[1][2])
+        print(updated_booleans[1][2])
+        self.assertIsNot(results[1][2], updated_booleans[1][2])
+        self.assertIsInstance(updated_booleans[1][2], bool)
 
     def test_get_top_containers(self):
         pass
