@@ -31,7 +31,7 @@ def connect_aspace_api():
          client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
     """
 
-    client: ASnakeClient = ASnakeClient(baseurl=as_api, username=as_auditor_un, password=as_auditor_pw)
+    client: ASnakeClient = ASnakeClient(baseurl=as_api_stag, username=as_auditor_un, password=as_auditor_pw)
     client.authorize()
     return client
 
@@ -864,7 +864,7 @@ def email_error(script_error):
     email_users(cs_email, [cs_email], 'data_audit-FAIL', error_message, server=email_server)
 
 
-def run_script():
+def run_script(email=True):
     """
     Runs run_audit() and email_users() functions to run data audit and email users the generated spreadsheet
     """
@@ -876,12 +876,13 @@ def run_script():
     except Exception as e:
         email_error(str(e))
     else:
-        try:
-            message_sample = f'ArchivesSpace data audit generated. See attachment.'
-            email_users(cs_email, [cs_email, ks_email, rl_email], f'{spreadsheet_filename}', message_sample,  # ks_email, rl_email
-                        files=[spreadsheet_filepath], server=email_server)
-        except Exception as e:
-            email_error(str(e))
+        if email is True:
+            try:
+                message_sample = f'ArchivesSpace data audit generated. See attachment.'
+                email_users(cs_email, [cs_email, ks_email, rl_email], f'{spreadsheet_filename}', message_sample,  # ks_email, rl_email
+                            files=[spreadsheet_filepath], server=email_server)
+            except Exception as e:
+                email_error(str(e))
     finally:
         try:
             if os.path.exists(spreadsheet_filepath):
@@ -892,4 +893,15 @@ def run_script():
 
 
 if __name__ == "__main__":
-    run_script()
+    email_option = None
+    while email_option is None:
+        email_input = input(f'Do you want to email users? Yes/No: ').lower()
+        if email_input == "yes":
+            email_option = True
+        elif email_input == "no":
+            email_option = False
+        elif email_input == "exit":
+            exit()
+        else:
+            print(f'Please enter a valid entry\n')
+    run_script(email_option)
