@@ -1,3 +1,4 @@
+import argparse
 import lxml
 import mysql.connector as mysql
 import os
@@ -614,28 +615,45 @@ def export_eads(wb, source_path, as_client):
             combined_aspace_id_clean = id_combined_regex.sub('', combined_id)
             if resource.status_code == 200:
                 if resource.json()["publish"] is True:
-                    try:
-                        export_ead = as_client.get("repositories/{}/resource_descriptions/{}.xml".format(repo_id,
-                                                                                                         resource_id),
-                                                   params={"include_unpublished": False, "include_daos": True,
-                                                           "numbered_cs": True, "print_pdf": False, "ead3": False})
-                    except Exception as e:
-                        checkexports_sheet.append([repo["name"], combined_aspace_id_clean, str(e)])
-                    else:
-                        filepath = str(Path(source_path, combined_aspace_id_clean)) + ".xml"
-                        with open(filepath, "wb") as local_file:
-                            local_file.write(export_ead.content)
-                            local_file.close()
-                            print("Exported: {}".format(combined_id))
+                    filepath = str(Path(source_path, combined_aspace_id_clean)) + ".xml"
+                    if not os.path.exists(filepath):  # TODO: remove before committing to main
                         try:
-                            test = etree.parse(filepath)
-                            print(test)
-                        except lxml.etree.XMLSyntaxError as e:  # TODO: this exception is throwing the whole script an exception and causing the job to stop
-                            os.remove(filepath)
-                            checkexports_sheet.append([repo["name"], combined_aspace_id_clean, e])
-                            continue  # Pass doesn't work
+                            export_ead = as_client.get("repositories/{}/resource_descriptions/{}.xml".format(repo_id,
+                                                                                                             resource_id),
+                                                       params={"include_unpublished": False, "include_daos": True,
+                                                               "numbered_cs": True, "print_pdf": False, "ead3": False})
+                        except Exception as e:
+                            checkexports_sheet.append([repo["name"], combined_aspace_id_clean, str(e)])
+                        else:
+                            with open(filepath, "wb") as local_file:
+                                local_file.write(export_ead.content)
+                                local_file.close()
+                                print("Exported: {}".format(combined_id))
+                    xml_error = check_eadxml(filepath)
+                    if xml_error:
+                        os.remove(filepath)
+                        checkexports_sheet.append([repo["name"], combined_aspace_id_clean, str(xml_error)])
             else:
                 checkexports_sheet.append([repo["name"], combined_aspace_id_clean, resource.json()])
+
+
+def check_eadxml(filepath):
+    """
+    Attempts to parse the exported EAD-XML file from ArchivesSpace checking for any syntax errors
+
+    Args
+        filepath (str): the filepath of the file to check
+
+    Returns:
+        error(XMLSyntaxError or None): if an error is found, return XMLSyntaxError. If not, return None
+    """
+    error = None
+    try:
+        etree.parse(filepath)
+    except lxml.etree.XMLSyntaxError as syntax_error:
+        error = syntax_error
+    finally:
+        return error
 
 
 def check_urls(wb, source_path):
