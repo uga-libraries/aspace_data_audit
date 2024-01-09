@@ -1,3 +1,4 @@
+import lxml
 import mysql.connector as mysql
 import os
 import re
@@ -619,13 +620,20 @@ def export_eads(wb, source_path, as_client):
                                                    params={"include_unpublished": False, "include_daos": True,
                                                            "numbered_cs": True, "print_pdf": False, "ead3": False})
                     except Exception as e:
-                        checkexports_sheet.append([repo["name", combined_aspace_id_clean, str(e)]])
+                        checkexports_sheet.append([repo["name"], combined_aspace_id_clean, str(e)])
                     else:
                         filepath = str(Path(source_path, combined_aspace_id_clean)) + ".xml"
                         with open(filepath, "wb") as local_file:
                             local_file.write(export_ead.content)
                             local_file.close()
                             print("Exported: {}".format(combined_id))
+                        try:
+                            test = etree.parse(filepath)
+                            print(test)
+                        except lxml.etree.XMLSyntaxError as e:  # TODO: this exception is throwing the whole script an exception and causing the job to stop
+                            os.remove(filepath)
+                            checkexports_sheet.append([repo["name"], combined_aspace_id_clean, e])
+                            continue  # Pass doesn't work
             else:
                 checkexports_sheet.append([repo["name"], combined_aspace_id_clean, resource.json()])
 
@@ -826,16 +834,16 @@ def run_audit(workbook, spreadsheet):
                "EAD-IDs": [["Repository", "Resource Title", "Resource ID", "EAD ID"], eadid_statement,
                            {"resids": True}, {"booleans": False}]}
 
-    for term, info in controlled_vocabs.items():
-        check_controlled_vocabs(workbook, term, info[0], info[1])
-
-    for query, info in queries.items():
-        headers, sql_statement, resids, bools = info[0], info[1], info[2]["resids"], info[3]["booleans"]
-        run_query(workbook, query, headers, sql_statement, resid=resids, booleans=bools)
-
-    duplicate_subjects(workbook)
-    duplicate_agent_persons(workbook)
-    check_creators(workbook, aspace_client)
+    # for term, info in controlled_vocabs.items():
+    #     check_controlled_vocabs(workbook, term, info[0], info[1])
+    #
+    # for query, info in queries.items():
+    #     headers, sql_statement, resids, bools = info[0], info[1], info[2]["resids"], info[3]["booleans"]
+    #     run_query(workbook, query, headers, sql_statement, resid=resids, booleans=bools)
+    #
+    # duplicate_subjects(workbook)
+    # duplicate_agent_persons(workbook)
+    # check_creators(workbook, aspace_client)
     # check_res_levels(workbook, aspace_client)
     source_path = create_export_folder()
     export_eads(workbook, source_path, aspace_client)
@@ -883,13 +891,13 @@ def run_script(email=True):
                             files=[spreadsheet_filepath], server=email_server)
             except Exception as e:
                 email_error(str(e))
-    finally:
-        try:
-            if os.path.exists(spreadsheet_filepath):
-                os.remove(spreadsheet_filepath)
-            delete_export_folder()
-        except Exception as e:
-            email_error(str(e))
+    # finally:
+    #     try:
+    #         if os.path.exists(spreadsheet_filepath):
+    #             os.remove(spreadsheet_filepath)
+    #         delete_export_folder()
+    #     except Exception as e:
+    #         email_error(str(e))
 
 
 if __name__ == "__main__":
