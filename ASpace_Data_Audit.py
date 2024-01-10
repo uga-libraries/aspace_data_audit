@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import argparse
 import lxml
 import mysql.connector as mysql
@@ -631,6 +633,7 @@ def export_eads(wb, source_path, as_client):
                                 print("Exported: {}".format(combined_id))
                     xml_error = check_eadxml(filepath)
                     if xml_error:
+                        print(f'XML Error: {xml_error}')
                         os.remove(filepath)
                         checkexports_sheet.append([repo["name"], combined_aspace_id_clean, str(xml_error)])
             else:
@@ -865,7 +868,7 @@ def run_audit(workbook, spreadsheet):
     # check_res_levels(workbook, aspace_client)
     source_path = create_export_folder()
     export_eads(workbook, source_path, aspace_client)
-    check_urls(workbook, source_path)
+    # check_urls(workbook, source_path)
 
     try:
         workbook.remove(workbook["Sheet"])
@@ -890,11 +893,27 @@ def email_error(script_error):
     email_users(cs_email, [cs_email], 'data_audit-FAIL', error_message, server=email_server)
 
 
+def parse_arguments():
+    """
+    Parses user arguments from console - primarily used for testing. Arguments are: -t, -h.
+
+    Returns:
+        parsed_args (argparse namespace): See https://docs.python.org/3/library/argparse.html#the-parse-args-method
+    """
+    parser = argparse.ArgumentParser(description="Run an audit against ArchivesSpace metadata")
+
+    parser.add_argument("-t", "--test", help="Do not email users, used for testing", action="store_false")
+
+    parsed_args = parser.parse_args()
+    return parsed_args
+
+
 def run_script(email=True):
     """
     Runs run_audit() and email_users() functions to run data audit and email users the generated spreadsheet
     """
 
+    print(email)
     audit_workbook, spreadsheet_filename = generate_spreadsheet()
     spreadsheet_filepath = str(Path.joinpath(Path.cwd(), spreadsheet_filename))
     try:
@@ -919,15 +938,7 @@ def run_script(email=True):
 
 
 if __name__ == "__main__":
-    email_option = None
-    while email_option is None:
-        email_input = input(f'Do you want to email users? Yes/No: ').lower()
-        if email_input == "yes":
-            email_option = True
-        elif email_input == "no":
-            email_option = False
-        elif email_input == "exit":
-            exit()
-        else:
-            print(f'Please enter a valid entry\n')
-    run_script(email_option)
+    args = parse_arguments()
+    for arg in args.__dict__:
+        print(str(arg) + ": " + str(args.__dict__[arg]))
+    run_script(args.test)

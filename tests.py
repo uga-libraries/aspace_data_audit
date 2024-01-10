@@ -2,6 +2,7 @@ import unittest
 
 import mysql.connector
 import openpyxl
+import subprocess  # TODO: build out running report through subprocess and testing excel output
 
 from ASpace_Data_Audit import *
 from secrets import *
@@ -36,6 +37,7 @@ class SpreadsheetTests(unittest.TestCase):
         self.test_workbook, self.test_spreadsheet_filepath = generate_spreadsheet()
         self.assertIsInstance(self.test_workbook, openpyxl.Workbook)
         self.assertIsInstance(self.test_spreadsheet_filepath, str)
+        self.assertEqual(os.path.exists(self.test_spreadsheet_filepath), True)
 
     def test_write_headers(self):
         pass
