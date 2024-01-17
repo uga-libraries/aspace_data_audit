@@ -7,6 +7,8 @@ import subprocess  # TODO: build out running report through subprocess and testi
 from ASpace_Data_Audit import *
 from secrets import *
 
+AUDIT_FILE = ""  # Global variable for storing the filepath of the audit spreadsheet generated
+
 
 class TestASpaceFunctions(unittest.TestCase):
 
@@ -40,7 +42,20 @@ class SpreadsheetTests(unittest.TestCase):
         self.assertEqual(os.path.exists(self.test_spreadsheet_filepath), True)
 
     def test_write_headers(self):
-        pass
+        test_headers = ["test_header_1", "test_header_2", "test_header_3"]
+        self.sample_workbook, self.test_spreadsheet_filepath = generate_spreadsheet()
+        write_headers(self.sample_workbook, "test", test_headers)
+        self.sample_workbook.save(self.test_spreadsheet_filepath)
+
+        test_workbook = openpyxl.load_workbook(self.test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        self.assertIn("test", test_sheetnames)
+
+        if "test" in test_sheetnames:
+            test_sheet = test_workbook["test"]
+            for row in test_sheet.iter_rows(max_row=1, max_col=3):
+                for cell in row:
+                    self.assertIn(cell.value, test_headers)
 
 
 class SQLTests(unittest.TestCase):
