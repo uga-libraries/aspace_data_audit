@@ -1,11 +1,13 @@
-# Overview
+# ArchivesSpace Data Auditor
+
+## Overview
 This script is designed to run on a server with access to an ArchivesSpace installation. It runs a series of checks 
 in the ArchivesSpace database, accessing data through the API, and exporting and evaluating EAD.xml files for content 
 and syntax errors. The script then generates an Excel spreadsheet detailing where there are any areas for data cleanup.
 
-# Getting Started
+## Getting Started
 
-## Dependencies
+### Dependencies
 
 - [lxml](https://lxml.de/) - Used to parse XML files for evaluating any XML syntax errors and parsing data from 
 downloaded XML files
@@ -16,7 +18,7 @@ errors to the ArchivesSpace MySQL database
 data audit report
 - [requests](https://docs.python-requests.org/en/latest/index.html) - Used to check URLs and get their status codes
 
-## Installation
+### Installation
 
 1. Download the repostiory via cloning to your local IDE or using GitHub's Code button and Download as ZIP
 2. Run `pip install requirements.txt`
@@ -28,7 +30,16 @@ data audit report
    5. Your ArchivesSpace's staging database credentials, including username, password, hostname, database name, and port
 4. Run the script as `python3 ASpace_Data_Audit.py`
 
-# Workflow
+### Script Arguments
+Open the console of your choice and navigate to the project directory. Type `python3 ASpace_Data_Audit.py` to run the 
+script. If you want to run the audit without emailing users of the result, add -t or --test, so 
+`python3 ASpace_Data_Audit.py -t`. The testing functionality is still being developed and may not function properly.
+
+### Testing
+There are a series of unittests that check various functions in ASpace_Data_Audit.py. They are still being developed and
+any test should be run with the `-t` or `--test` argument as listed in # Script Arguments
+
+## Workflow
 
 1. Generate an Excel spreadsheet to use for our report
 2. Begin running the audit. The audit checks for the following:
@@ -60,11 +71,11 @@ data audit report
 user
 4. Delete the spreadsheet and exported EAD.xml folder and files from the server - email if there is an error
 
-# Author
+## Author
 
 - Corey Schmidt - Project Management Librarian/Archivist at the University of Georgia Libraries
 
-# Acknowledgements
+## Acknowledgements
 
 - Kevin Cottrell - GALILEO/Library Infrastructure Systems Architect at the University of Georgia Libraries
 - ArchivesSpace Community
