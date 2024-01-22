@@ -2,7 +2,7 @@ import unittest
 
 import mysql.connector
 import openpyxl
-import subprocess  # TODO: build out running report through subprocess and testing excel output
+import subprocess
 
 from ASpace_Data_Audit import *
 from secrets import *
@@ -160,7 +160,10 @@ class AuditFunctionsTests(unittest.TestCase):
 
 
 class AuditOutputTests(unittest.TestCase):
-    pass
+
+    def test_run_report(self):
+        subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
+        subprocess.call(["python", "ASpace_Data_Audit.py", "--test"])
 
 
 if __name__ == '__main__':
