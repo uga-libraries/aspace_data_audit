@@ -1,13 +1,35 @@
+import time
 import unittest
 
 import mysql.connector
 import openpyxl
+import pathlib
 import subprocess
 
 from ASpace_Data_Audit import *
 from secrets import *
 
 AUDIT_FILE = ""  # Global variable for storing the filepath of the audit spreadsheet generated
+
+
+class AuditOutputTests(unittest.TestCase):
+
+    def test_run_report(self):
+        subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
+        subprocess.call(["python", "ASpace_Data_Audit.py", "--test"])
+        testing_spreadsheet = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
+        self.assertIsFile(testing_spreadsheet)
+
+    @staticmethod
+    def assertIsFile(path):
+        if not pathlib.Path(path).resolve().is_file():
+            raise AssertionError(f'File does not exist: {str(path)}')
+
+
+    @staticmethod
+    def assertIsFolder(path):
+        if not pathlib.Path(path).resolve().is_dir():
+            raise AssertionError(f'Folder does not exist: {str(path)}')
 
 
 class TestASpaceFunctions(unittest.TestCase):
@@ -85,10 +107,22 @@ class SQLTests(unittest.TestCase):
         pass
 
 
-class AuditFunctionsTests(unittest.TestCase):
+class AuditFunctionsTests(AuditOutputTests):
 
     def test_email_users(self):
-        pass
+        send_from = input(f'Enter the email to send from: ')
+        send_to = [f'{input("Enter the email to send to: ")}']
+        email_subject = f'Test email_users for ASpace_Data_Audit'
+        email_message = ("This is a test of the email_users function. If you received this, you can type 'Yes' in the "
+                         "console response.")
+        test_server = input(f'Enter the email server: ')
+        try:
+            email_users(send_from, send_to, email_subject, email_message, server=test_server)
+        except Exception as error:
+            self.fail(error)
+        email_response = input(f'Did you receive an email from the above source? It may take a minute or two. '
+                               f'Type Yes or No: ').lower()
+        self.assertEqual(email_response, 'yes')
 
     def test_standardize_resids(self):
         test_statement = ('SELECT repo.name AS Repository, resource.identifier AS Resource_ID  '
@@ -128,10 +162,16 @@ class AuditFunctionsTests(unittest.TestCase):
         pass
 
     def test_check_export_folder(self):
-        pass
+        export_folder = pathlib.Path(os.getcwd(), "source_eads")
+        self.assertIsFolder(export_folder)
 
     def test_delete_export_folder(self):
-        pass
+        source_eads_path = str(Path.joinpath(Path.cwd(), "test_source_eads"))
+        os.mkdir(source_eads_path)
+        time.sleep(5)
+        delete_export_folder(source_eads_path)
+        if not os.path.exists(source_eads_path):
+            pass
 
     def test_check_urls(self):
         # again not sure how to test this function, no stdout
@@ -151,19 +191,25 @@ class AuditFunctionsTests(unittest.TestCase):
         pass
 
     def test_email_error(self):
-        # not sure how to test this, it refers to email_users
+        send_from = input(f'Enter the email to send from: ')
+        send_to = [f'{input("Enter the email to send to: ")}']
+        test_server = input(f'Enter the email server: ')
+        try:
+            email_error(send_from, send_to, f'TEST ERROR for ASpace_Data_Audit - not real error',
+                        server=test_server)
+        except Exception as error:
+            self.fail(error)
+        email_response = input(f'Did you receive an email from the above source? It may take a minute or two. '
+                               f'Type Yes or No: ').lower()
+        self.assertEqual(email_response, 'yes')
         pass
 
     def test_run_script(self):
+        run_script(False)
+        generated_report = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
+        self.assertIsFile(generated_report)
         # this kicks off the whole script, would be difficult to test
         pass
-
-
-class AuditOutputTests(unittest.TestCase):
-
-    def test_run_report(self):
-        subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
-        subprocess.call(["python", "ASpace_Data_Audit.py", "--test"])
 
 
 if __name__ == '__main__':

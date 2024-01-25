@@ -110,6 +110,24 @@ def email_users(send_from, send_to, subject, message, files=None, server="localh
     smtp.quit()
 
 
+def email_error(send_from, send_to, script_error, server="localhost"):
+    """
+    Emails admin in case an error is generated when running the script
+
+    Args:
+        send_to (list[str]): to name(s)
+        send_from (str): from name
+        script_error (str): The error message to be included in the email
+        server (str): mail server host name
+
+    Returns:
+        None
+    """
+
+    error_message = f'Audit failed with error: {script_error}'
+    email_users(send_from, send_to, 'data_audit-FAIL', error_message, server=server)
+
+
 def query_database(connection, cursor, statement):
     """
     Runs a query on the database
@@ -565,17 +583,18 @@ def create_export_folder():
         return str(Path(source_path))
 
 
-def delete_export_folder():
+def delete_export_folder(source_eads_path):
     """
     Deletes the source_eads directory and all files within if it exists
-    """
 
-    source_eads_path = str(Path.joinpath(Path.cwd(), "source_eads"))
+    Args:
+        source_eads_path (str): the full filepath of the source_eads folder
+    """
     if os.path.exists(source_eads_path):
         for filename in os.listdir(source_eads_path):
             filepath = str(os.path.join(source_eads_path, filename))
             os.remove(filepath)
-        os.rmdir(str(Path.joinpath(Path.cwd(), "source_eads")))
+        os.rmdir(source_eads_path)
 
 
 def export_eads(wb, source_path, as_client):
@@ -878,21 +897,6 @@ def run_audit(workbook, spreadsheet):
     workbook.save(spreadsheet)
 
 
-def email_error(script_error):
-    """
-    Emails admin in case an error is generated when running the script
-
-    Args:
-        script_error (str): The error message to be included in the email
-
-    Returns:
-        None
-    """
-
-    error_message = f'Audit failed with error: {script_error}'
-    email_users(cs_email, [cs_email], 'data_audit-FAIL', error_message, server=email_server)
-
-
 def parse_arguments():
     """
     Parses user arguments from console - primarily used for testing. Arguments are: -t, -h.
@@ -918,7 +922,7 @@ def run_script(email=True):
     try:
         run_audit(audit_workbook, spreadsheet_filename)
     except Exception as e:
-        email_error(str(e))
+        email_error(cs_email, [cs_email], str(e), server=email_server)
     else:
         if email is True:
             try:
@@ -926,14 +930,15 @@ def run_script(email=True):
                 email_users(cs_email, [cs_email, ks_email, rl_email], f'{spreadsheet_filename}', message_sample,  # ks_email, rl_email
                             files=[spreadsheet_filepath], server=email_server)
             except Exception as e:
-                email_error(str(e))
+                email_error(cs_email, [cs_email], str(e), server=email_server)
     # finally:
     #     try:
     #         if os.path.exists(spreadsheet_filepath):
     #             os.remove(spreadsheet_filepath)
-    #         delete_export_folder()
+    #         source_eads_path = str(Path.joinpath(Path.cwd(), "source_eads"))
+    #         delete_export_folder(source_eads_path)
     #     except Exception as e:
-    #         email_error(str(e))
+    #         email_error(cs_email, [cs_email], str(e), server=email_server)
 
 
 if __name__ == "__main__":
