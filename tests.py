@@ -1,3 +1,4 @@
+import os
 import time
 import unittest
 
@@ -15,10 +16,20 @@ AUDIT_FILE = ""  # Global variable for storing the filepath of the audit spreads
 class AuditOutputTests(unittest.TestCase):
 
     def test_run_report(self):
+        test = pathlib.Path(os.getcwd(), 'venv/Scripts/activate')
+        print(test)
+        subprocess.run(['source', 'venv/Scripts/activate'])
         subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
         subprocess.call(["python", "ASpace_Data_Audit.py", "--test"])
         testing_spreadsheet = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
-        self.assertIsFile(testing_spreadsheet)
+        report_generated = self.assertIsFile(testing_spreadsheet)
+        if report_generated is True:
+            global AUDIT_FILE
+            AUDIT_FILE = report_generated
+
+    def test_audit_file(self):
+        print(AUDIT_FILE)
+        self.assertIsFile(AUDIT_FILE)
 
     @staticmethod
     def assertIsFile(path):
@@ -32,7 +43,13 @@ class AuditOutputTests(unittest.TestCase):
             raise AssertionError(f'Folder does not exist: {str(path)}')
 
 
-class TestASpaceFunctions(unittest.TestCase):
+    @staticmethod
+    def assertHasFiles(path):
+        if not os.listdir(path):
+            raise AssertionError(f'Files do not exist in {path}')
+
+
+class TestASpaceFunctions(AuditOutputTests):
 
     def test_connect_aspace_api(self):
         self.local_aspace = connect_aspace_api()
@@ -50,9 +67,16 @@ class TestASpaceFunctions(unittest.TestCase):
         pass
 
     def test_export_eads(self):
-        # could test this by checking if exported files are in export_folder, but that would require dependency on
-        # test_create_export_folder
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        export_folder = str(pathlib.Path(os.getcwd(), "source_eads"))
+        if not os.path.exists(export_folder):
+            os.mkdir(export_folder)
+        local_aspace = connect_aspace_api()
+        export_eads(test_workbook, export_folder, local_aspace)
+        self.assertHasFiles(export_folder)
+        for root, directories, files in os.walk(export_folder):
+            for filename in files:
+                self.assertEqual(str(Path(filename).suffix), '.xml')
 
 
 class SpreadsheetTests(unittest.TestCase):
