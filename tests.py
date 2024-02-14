@@ -119,8 +119,23 @@ class SQLTests(unittest.TestCase):
         self.assertIsInstance(results, list)
 
     def test_run_query(self):
-        # use https://stackoverflow.com/a/34738440 to capture stdout print statements for checking
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        test_headers = ["Name", "Username", "System Administrator?", "Hidden User?"]
+        self.db_connect, self.db_cursor = connect_db()
+        self.test_statement = ('SELECT name, username, is_system_user AS System_Administrator, '
+                               'is_hidden_user AS Hidden_User FROM user')
+        run_query(test_workbook, 'Users', test_headers, self.test_statement, booleans=True)
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        if "Users" in test_sheetnames:
+            user_sheet = test_workbook["Users"]
+            potential_users = []
+            for row in user_sheet.iter_rows(min_row=2, max_col=1):
+                for cell in row:
+                    potential_users.append(cell.value)
+            self.assertIn('Administrator', potential_users)
+        os.remove(test_spreadsheet_filepath)
 
     def test_check_controlled_vocabs(self):
         # use https://stackoverflow.com/a/34738440 to capture stdout print statements for checking

@@ -246,10 +246,10 @@ def run_query(wb, sheetname, headers, statement, resid=False, booleans=False):
         sheetname (str): The name of sheet to be added to the data audit spreadsheet
         headers (list): List of strings to be headers on the top row of the sheet
         statement (str): The MySQL statement to run against the ArchivesSpace database
-        resid (bool): If a resource identifier is included in the results of the MySQL statement, run the
-                                identifier through standardize_resids()
-        booleans (bool): If booleans are included in the results of the MySQL statement, run the
-                                   them through update_booleans() to change them from numbers to TRUE or FALSE
+        resid (bool): If a resource identifier is included in the results of the MySQL statement, run the identifier
+                      through standardize_resids()
+        booleans (bool): If booleans are included in the results of the MySQL statement, run them through
+                         update_booleans() to change them from numbers to TRUE or FALSE
 
     Returns:
         None
@@ -637,7 +637,7 @@ def export_eads(wb, source_path, as_client):
             if resource.status_code == 200:
                 if resource.json()["publish"] is True:
                     filepath = str(Path(source_path, combined_aspace_id_clean)) + ".xml"
-                    if not os.path.exists(filepath):  # TODO: remove before committing to main
+                    if not os.path.exists(filepath):  # TODO: make this an optional parameter for this function for testing
                         try:
                             export_ead = as_client.get("repositories/{}/resource_descriptions/{}.xml".format(repo_id,
                                                                                                              resource_id),
