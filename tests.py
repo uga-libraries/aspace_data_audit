@@ -151,6 +151,8 @@ class SQLTests(unittest.TestCase):
             for row in user_sheet.iter_rows(min_row=2, max_col=1):
                 for cell in row:
                     potential_vocab.append(cell.value)
+                    if cell.value not in test_terms:
+                        self.assertTrue(cell.font.color)
             self.assertIn('lcnaf', potential_vocab)
         os.remove(test_spreadsheet_filepath)
 
