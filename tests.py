@@ -1,8 +1,6 @@
-import os
 import time
 import unittest
 
-import mysql.connector
 import openpyxl
 import pathlib
 import subprocess
@@ -138,8 +136,23 @@ class SQLTests(unittest.TestCase):
         os.remove(test_spreadsheet_filepath)
 
     def test_check_controlled_vocabs(self):
-        # use https://stackoverflow.com/a/34738440 to capture stdout print statements for checking
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        test_vocab = 'Name_Sources'
+        test_terms = ["local", "naf", "ingest", "snac", "lcnaf"]
+        test_term_num = 4
+        check_controlled_vocabs(test_workbook, test_vocab, test_terms, test_term_num)
+
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        if "Name_Sources" in test_sheetnames:
+            user_sheet = test_workbook["Name_Sources"]
+            potential_vocab = []
+            for row in user_sheet.iter_rows(min_row=2, max_col=1):
+                for cell in row:
+                    potential_vocab.append(cell.value)
+            self.assertIn('lcnaf', potential_vocab)
+        os.remove(test_spreadsheet_filepath)
 
     def test_check_duplicates(self):
         # not sure how to test this, since there's no print outputs
@@ -170,8 +183,6 @@ class AuditFunctionsTests(AuditOutputTests):
         self.db_connect, self.db_cursor = connect_db()
         results = query_database(self.db_connect, self.db_cursor, test_statement)
         updated_resids = standardize_resids(results)
-        # print(results[1][1])
-        # print(updated_resids[1][1])
         self.assertNotEqual(results[1][1], updated_resids[1][1])
         self.assertIsInstance(updated_resids[1][1], str)
         self.assertNotIn("Null", updated_resids[1][1])
@@ -182,8 +193,6 @@ class AuditFunctionsTests(AuditOutputTests):
         self.db_connect, self.db_cursor = connect_db()
         results = query_database(self.db_connect, self.db_cursor, test_statement)
         updated_booleans = update_booleans(results)
-        # print(results[1][2])
-        # print(updated_booleans[1][2])
         self.assertIsNot(results[1][2], updated_booleans[1][2])
         self.assertIsInstance(updated_booleans[1][2], bool)
 
@@ -247,7 +256,6 @@ class AuditFunctionsTests(AuditOutputTests):
         run_script(False)
         generated_report = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
         self.assertIsFile(generated_report)
-        # this kicks off the whole script, would be difficult to test
         pass
 
 
