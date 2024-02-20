@@ -54,8 +54,22 @@ class TestASpaceFunctions(AuditOutputTests):
         self.assertIsInstance(self.local_aspace, ASnakeClient)
 
     def test_check_creators(self):
-        # use https://stackoverflow.com/a/34738440 to capture stdout print statements for checking
-        pass
+        self.sample_workbook, self.test_spreadsheet_filepath = generate_spreadsheet()
+        self.local_aspace = connect_aspace_api()
+        check_creators(self.sample_workbook, self.local_aspace)
+        self.sample_workbook.save(self.test_spreadsheet_filepath)
+
+        test_workbook = openpyxl.load_workbook(self.test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        self.assertIn("Resources without Creators", test_sheetnames)
+
+        if "Resources without Creators" in test_sheetnames:
+            test_sheet = test_workbook["Resources without Creators"]
+            for row in test_sheet.iter_rows(min_row=2, max_row=2, min_col=4, max_col=4):
+                for cell in row:
+                    if cell.value:
+                        self.assertEqual(cell.value, "None")
+        os.remove(self.test_spreadsheet_filepath)
 
     def test_check_child_levels(self):
         pass
