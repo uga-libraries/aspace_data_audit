@@ -431,7 +431,7 @@ def get_top_children(tree_info, child_levels, root_uri, aspace_coll_id, as_clien
     return child_levels
 
 
-def check_res_levels(wb, as_client):
+def check_res_levels(wb, as_client, test=False):
     """
     Iterates through all published resources in ArchivesSpace instance and checks to see if archival objects on the top
     level are labeled with different levels; ex. file and series on c01, item, file, and subseries on c01
@@ -443,6 +443,7 @@ def check_res_levels(wb, as_client):
     Args:
         wb (openpyxl.Workbook): The openpyxl workbook of the spreadsheet being generated for the data audit
         as_client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        test (bool): if True, end the function at the first instance of a level disparity and return None
 
     Returns:
         None
@@ -482,6 +483,8 @@ def check_res_levels(wb, as_client):
                                                    str(level_disparity)])
                             print(f'Repo: {repo["name"]}, Resource: {combined_id}, Parent Title: {top_child_title}, '
                                   f'Parent URI: {top_child_uri}, Level Disparity: {level_disparity}')
+                            if test is True:
+                                return None
 
 
 def duplicate_subjects(wb):

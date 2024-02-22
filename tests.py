@@ -1,3 +1,4 @@
+import ast
 import time
 import unittest
 
@@ -75,8 +76,24 @@ class TestASpaceFunctions(AuditOutputTests):
         pass
 
     def test_check_res_levels(self):
-        # use https://stackoverflow.com/a/34738440 to capture stdout print statements for checking
-        pass
+        self.sample_workbook, self.test_spreadsheet_filepath = generate_spreadsheet()
+        self.local_aspace = connect_aspace_api()
+        check_res_levels(self.sample_workbook, self.local_aspace, test=True)
+        self.sample_workbook.save(self.test_spreadsheet_filepath)
+
+        test_workbook = openpyxl.load_workbook(self.test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        self.assertIn("Collection Level Checks", test_sheetnames)
+
+        if "Collection Level Checks" in test_sheetnames:
+            test_sheet = test_workbook["Collection Level Checks"]
+            for row in test_sheet.iter_rows(min_row=2, max_row=2, min_col=5, max_col=5):
+                for cell in row:
+                    if cell.value:
+                        test_value = ast.literal_eval(cell.value)
+                        self.assertIsInstance(test_value, list)
+                        self.assertTrue(len(cell.value) >= 2)
+        os.remove(self.test_spreadsheet_filepath)
 
     def test_export_eads(self):
         test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
