@@ -188,8 +188,37 @@ class SQLTests(unittest.TestCase):
         os.remove(test_spreadsheet_filepath)
 
     def test_check_duplicates(self):
-        # not sure how to test this, since there's no print outputs
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        test_headers = ["Original Subject", "Original Subject ID", "Duplicate Subject", "Duplicate Subject ID"]
+        test_statement = f'SELECT title, id FROM subject'
+        test_sheetname = 'Duplicate Subjects'
+        test_uri_string = '/subjects/'
+        check_duplicates(test_workbook, test_headers, test_statement, test_sheetname, test_uri_string)
+
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        if 'Duplicate Subjects' in test_sheetnames:
+            user_sheet = test_workbook["Duplicate Subjects"]
+            potential_duplicates = {}
+            duplicate_count = 0
+            for row in user_sheet.iter_rows(min_row=2, max_col=4):
+                potential_duplicates[duplicate_count] = []
+                for cell in row:
+                    if cell.value:
+                        self.assertIsInstance(cell.value, str)
+                        potential_duplicates[duplicate_count].append(cell.value)
+                duplicate_count += 1
+            for result_index, results in potential_duplicates.items():
+                if results:  # if results not an empty list
+                    original_name = results[0]
+                    duplicate_name = results[2]
+                    self.assertEqual(original_name, duplicate_name)
+
+                    original_uri = results[1]
+                    duplicate_uri = results[3]
+                    self.assertNotEqual(original_uri, duplicate_uri)
+        os.remove(test_spreadsheet_filepath)
 
 
 class AuditFunctionsTests(AuditOutputTests):
