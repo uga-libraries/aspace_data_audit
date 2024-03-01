@@ -1,4 +1,5 @@
 import ast
+import os
 import time
 import unittest
 
@@ -262,14 +263,62 @@ class AuditFunctionsTests(AuditOutputTests):
         pass
 
     def test_duplicate_subjects(self):
-        # this function passes info to check_duplicates - consider removing from test or having test pass info to
-        # check_duplicates
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        duplicate_subjects(test_workbook)
+
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        if 'Duplicate Subjects' in test_sheetnames:
+            user_sheet = test_workbook["Duplicate Subjects"]
+            potential_duplicates = {}
+            duplicate_count = 0
+            for row in user_sheet.iter_rows(min_row=2, max_col=4):
+                potential_duplicates[duplicate_count] = []
+                for cell in row:
+                    if cell.value:
+                        self.assertIsInstance(cell.value, str)
+                        potential_duplicates[duplicate_count].append(cell.value)
+                duplicate_count += 1
+            for result_index, results in potential_duplicates.items():
+                if results:  # if results not an empty list
+                    original_name = results[0]
+                    duplicate_name = results[2]
+                    self.assertEqual(original_name, duplicate_name)
+
+                    original_uri = results[1]
+                    duplicate_uri = results[3]
+                    self.assertNotEqual(original_uri, duplicate_uri)
+        os.remove(test_spreadsheet_filepath)
 
     def test_duplicate_agent_persons(self):
-        # this function passes info to check_duplicates - consider removing from test or having test pass info to
-        # check_duplicates
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        duplicate_agent_persons(test_workbook)
+
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+        if 'Duplicate Agents' in test_sheetnames:
+            user_sheet = test_workbook["Duplicate Agents"]
+            potential_duplicates = {}
+            duplicate_count = 0
+            for row in user_sheet.iter_rows(min_row=2, max_col=4):
+                potential_duplicates[duplicate_count] = []
+                for cell in row:
+                    if cell.value:
+                        self.assertIsInstance(cell.value, str)
+                        potential_duplicates[duplicate_count].append(cell.value)
+                duplicate_count += 1
+            for result_index, results in potential_duplicates.items():
+                if results:  # if results not an empty list
+                    original_name = results[0]
+                    duplicate_name = results[2]
+                    self.assertEqual(original_name, duplicate_name)
+
+                    original_uri = results[1]
+                    duplicate_uri = results[3]
+                    self.assertNotEqual(original_uri, duplicate_uri)
+        os.remove(test_spreadsheet_filepath)
 
     def test_check_export_folder(self):
         export_folder = pathlib.Path(os.getcwd(), "source_eads")
@@ -284,8 +333,31 @@ class AuditFunctionsTests(AuditOutputTests):
             pass
 
     def test_check_urls(self):
-        # again not sure how to test this function, no stdout
-        pass
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        export_folder = str(pathlib.Path(os.getcwd(), "source_eads"))
+        if not os.path.exists(export_folder):
+            os.mkdir(export_folder)
+        local_aspace = connect_aspace_api()
+        export_eads(test_workbook, export_folder, local_aspace)
+        check_urls(test_workbook, export_folder)
+
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+
+        if 'URL Errors' in test_sheetnames:
+            user_sheet = test_workbook["URL Errors"]
+            for row in user_sheet.iter_rows(min_row=2, max_row=20, min_col=4, max_col=4):
+                for cell in row:
+                    if cell.value:
+                        try:
+                            response = requests.get(cell.value, allow_redirects=True, timeout=30)
+                        except:
+                            pass
+                        else:
+                            print(cell.value)
+                            self.assertNotEqual(response.status_code, 200)
+        os.remove(test_spreadsheet_filepath)
 
     def test_check_url(self):
         test_good_url = 'https://www.libs.uga.edu/'
