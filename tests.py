@@ -367,6 +367,28 @@ class AuditFunctionsTests(AuditOutputTests):
         self.assertIsNone(good_response_code)
         self.assertIsNotNone(bad_response_code)
 
+    def test_search_ghost_containers(self):
+        test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
+        local_aspace = connect_aspace_api()
+        search_ghost_containers(test_workbook, local_aspace)
+
+        test_workbook.save(test_spreadsheet_filepath)
+        test_workbook = openpyxl.load_workbook(test_spreadsheet_filepath)
+        test_sheetnames = test_workbook.sheetnames
+
+        if 'Unlinked Top Containers' in test_sheetnames:
+            user_sheet = test_workbook["Unlinked Top Containers"]
+            for row in user_sheet.iter_rows(min_row=2, max_row=20, min_col=4, max_col=4):
+                for cell in row:
+                    if cell.value:
+                        container_data = local_aspace.get(f'{cell.value}',
+                                                          params={"resolve[]": True}).json()
+                        if "collection" not in container_data:
+                            self.fail()
+                        else:
+                            self.assertTrue(len(container_data["collection"]) == 0)
+        os.remove(test_spreadsheet_filepath)
+
     def test_run_audit(self):
         # no idea how to test this, it runs the whole suit of checks on our data, but no stdout - just writing to
         # workbook

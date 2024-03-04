@@ -760,6 +760,36 @@ def check_url(url):
         return response_code
 
 
+def search_ghost_containers(wb, as_client):
+    """
+    Search for top containers that are not linked to any resources in ArchivesSpace
+    Args:
+        wb (openpyxl.Workbook): The openpyxl workbook of the spreadsheet being generated for the data audit
+        as_client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+    Returns:
+        None
+    """
+
+    print("Checking unlinked top containers...", flush=True, end='')
+    headers = ["Repository", "Box-Number", "Barcode", "Container URI"]
+    utc_sheet = write_headers(wb, "Unlinked Top Containers", headers)
+    repos = as_client.get("repositories").json()
+    for repo in repos:
+        repo_id = repo["uri"].split("/")[2]
+        topconts_ids = as_client.get(f'repositories/{repo_id}/top_containers', params={"all_ids": True}).json()
+        for container_id in topconts_ids:
+            container_data = as_client.get(f'repositories/{repo_id}/top_containers/{container_id}',
+                                           params={"resolve[]": True}).json()
+            if len(container_data["collection"]) == 0:
+                if "barcode" not in container_data:
+                    barcode = "N/A"
+                else:
+                    barcode = container_data["barcode"]
+                utc_sheet.append([repo["name"], container_data["display_string"], barcode,
+                                  container_data["uri"]])
+    print("Done")
+
+
 def run_audit(workbook, spreadsheet):
     """
     Calls a series of functions to run data audits on UGA's ArchivesSpace staging data with the API and MySQL database.
@@ -890,7 +920,8 @@ def run_audit(workbook, spreadsheet):
     check_res_levels(workbook, aspace_client)
     source_path = create_export_folder()
     export_eads(workbook, source_path, aspace_client)
-    # check_urls(workbook, source_path)
+    check_urls(workbook, source_path)
+    search_ghost_containers(workbook, aspace_client)
 
     try:
         workbook.remove(workbook["Sheet"])
