@@ -331,6 +331,8 @@ class AuditFunctionsTests(AuditOutputTests):
         delete_export_folder(source_eads_path)
         if not os.path.exists(source_eads_path):
             pass
+        else:
+            self.fail()
 
     def test_check_urls(self):
         test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
@@ -347,16 +349,14 @@ class AuditFunctionsTests(AuditOutputTests):
 
         if 'URL Errors' in test_sheetnames:
             user_sheet = test_workbook["URL Errors"]
-            for row in user_sheet.iter_rows(min_row=2, max_row=20, min_col=4, max_col=4):
-                for cell in row:
-                    if cell.value:
-                        try:
-                            response = requests.get(cell.value, allow_redirects=True, timeout=30)
-                        except:
-                            pass
-                        else:
-                            print(cell.value)
-                            self.assertNotEqual(response.status_code, 200)
+            for url in user_sheet.iter_rows(min_row=2, max_row=20, min_col=4, max_col=4, values_only=True):
+                try:
+                    response = requests.get(url[0], allow_redirects=True, timeout=30)
+                except:
+                    pass
+                else:
+                    print(url[0])
+                    self.assertNotEqual(response.status_code, 200)
         os.remove(test_spreadsheet_filepath)
 
     def test_check_url(self):
@@ -378,21 +378,18 @@ class AuditFunctionsTests(AuditOutputTests):
 
         if 'Unlinked Top Containers' in test_sheetnames:
             user_sheet = test_workbook["Unlinked Top Containers"]
-            for row in user_sheet.iter_rows(min_row=2, max_row=20, min_col=4, max_col=4):
-                for cell in row:
-                    if cell.value:
-                        container_data = local_aspace.get(f'{cell.value}',
-                                                          params={"resolve[]": True}).json()
-                        if "collection" not in container_data:
-                            self.fail()
-                        else:
-                            self.assertTrue(len(container_data["collection"]) == 0)
+            for container_uri in user_sheet.iter_rows(min_row=2, max_row=20, min_col=4, max_col=4, values_only=True):
+                if container_uri[0]:
+                    container_data = local_aspace.get(f'{container_uri[0]}',
+                                                      params={"resolve[]": True}).json()
+                    if "collection" not in container_data:
+                        self.fail()
+                    else:
+                        self.assertTrue(len(container_data["collection"]) == 0)
         os.remove(test_spreadsheet_filepath)
 
     def test_run_audit(self):
-        # no idea how to test this, it runs the whole suit of checks on our data, but no stdout - just writing to
-        # workbook
-        pass
+        AuditOutputTests.test_run_report(self)
 
     def test_email_error(self):
         send_from = input(f'Enter the email to send from: ')
@@ -406,13 +403,11 @@ class AuditFunctionsTests(AuditOutputTests):
         email_response = input(f'Did you receive an email from the above source? It may take a minute or two. '
                                f'Type Yes or No: ').lower()
         self.assertEqual(email_response, 'yes')
-        pass
 
     def test_run_script(self):
         run_script(False)
         generated_report = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
         self.assertIsFile(generated_report)
-        pass
 
 
 if __name__ == '__main__':
