@@ -1,5 +1,4 @@
 import ast
-import os
 import time
 import unittest
 
@@ -8,7 +7,6 @@ import pathlib
 import subprocess
 
 from ASpace_Data_Audit import *
-from secrets import *
 
 AUDIT_FILE = ""  # Global variable for storing the filepath of the audit spreadsheet generated
 
@@ -16,32 +14,24 @@ AUDIT_FILE = ""  # Global variable for storing the filepath of the audit spreads
 class AuditOutputTests(unittest.TestCase):
 
     def test_run_report(self):
-        test = pathlib.Path(os.getcwd(), 'venv/Scripts/activate')
-        print(test)
-        subprocess.run(['source', 'venv/Scripts/activate'])
-        subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
-        subprocess.call(["python", "ASpace_Data_Audit.py", "--test"])
         testing_spreadsheet = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
+        vevn_python = pathlib.Path(os.getcwd(), 'venv/Scripts/python.exe')
+        subprocess.run([vevn_python, '-m', 'pip', 'install', '-r', 'requirements.txt'], shell=True)
+        subprocess.call([vevn_python, 'ASpace_Data_Audit.py', '--test'], shell=True)
         report_generated = self.assertIsFile(testing_spreadsheet)
         if report_generated is True:
             global AUDIT_FILE
             AUDIT_FILE = report_generated
-
-    def test_audit_file(self):
-        print(AUDIT_FILE)
-        self.assertIsFile(AUDIT_FILE)
 
     @staticmethod
     def assertIsFile(path):
         if not pathlib.Path(path).resolve().is_file():
             raise AssertionError(f'File does not exist: {str(path)}')
 
-
     @staticmethod
     def assertIsFolder(path):
         if not pathlib.Path(path).resolve().is_dir():
             raise AssertionError(f'Folder does not exist: {str(path)}')
-
 
     @staticmethod
     def assertHasFiles(path):
@@ -73,8 +63,8 @@ class TestASpaceFunctions(AuditOutputTests):
                         self.assertEqual(cell.value, "None")
         os.remove(self.test_spreadsheet_filepath)
 
-    def test_check_child_levels(self):
-        pass
+    # def test_check_child_levels(self):  # This is part of test_check_res_levels
+    #     pass
 
     def test_check_res_levels(self):
         self.sample_workbook, self.test_spreadsheet_filepath = generate_spreadsheet()
@@ -259,8 +249,8 @@ class AuditFunctionsTests(AuditOutputTests):
         self.assertIsNot(results[1][2], updated_booleans[1][2])
         self.assertIsInstance(updated_booleans[1][2], bool)
 
-    def test_get_top_containers(self):
-        pass
+    # def test_get_top_children(self):  # This is part of test_check_res_levels
+    #     pass
 
     def test_duplicate_subjects(self):
         test_workbook, test_spreadsheet_filepath = generate_spreadsheet()
@@ -321,8 +311,10 @@ class AuditFunctionsTests(AuditOutputTests):
         os.remove(test_spreadsheet_filepath)
 
     def test_check_export_folder(self):
+        create_export_folder()
         export_folder = pathlib.Path(os.getcwd(), "source_eads")
         self.assertIsFolder(export_folder)
+        delete_export_folder(str(export_folder))
 
     def test_delete_export_folder(self):
         source_eads_path = str(Path.joinpath(Path.cwd(), "test_source_eads"))
@@ -405,8 +397,8 @@ class AuditFunctionsTests(AuditOutputTests):
         self.assertEqual(email_response, 'yes')
 
     def test_run_script(self):
-        run_script(False)
         generated_report = pathlib.Path(os.getcwd(), f'data_audit_{str(date.today())}.xlsx')
+        run_script(test=True)
         self.assertIsFile(generated_report)
 
 

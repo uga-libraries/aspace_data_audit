@@ -640,7 +640,7 @@ def export_eads(wb, source_path, as_client):
             if resource.status_code == 200:
                 if resource.json()["publish"] is True:
                     filepath = str(Path(source_path, combined_aspace_id_clean)) + ".xml"
-                    if not os.path.exists(filepath):  # TODO: make this an optional parameter for this function for testing
+                    if not os.path.exists(filepath):
                         try:
                             export_ead = as_client.get("repositories/{}/resource_descriptions/{}.xml".format(repo_id,
                                                                                                              resource_id),
@@ -793,7 +793,7 @@ def search_ghost_containers(wb, as_client):
 def run_audit(workbook, spreadsheet):
     """
     Calls a series of functions to run data audits on UGA's ArchivesSpace staging data with the API and MySQL database.
-    It generates an excel spreadsheet found in the reports directory
+    It generates an Excel spreadsheet found in the reports directory
 
     Args:
         workbook (openpyxl.Workbook): openpyxl Workbook class to use to edit the spreadsheet
@@ -940,13 +940,13 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description="Run an audit against ArchivesSpace metadata")
 
-    parser.add_argument("-t", "--test", help="Do not email users, used for testing", action="store_false")
+    parser.add_argument("-t", "--test", help="Do not email users, used for testing", action="store_true")
 
     parsed_args = parser.parse_args()
     return parsed_args
 
 
-def run_script(email=True):
+def run_script(test=False):
     """
     Runs run_audit() and email_users() functions to run data audit and email users the generated spreadsheet
     """
@@ -958,21 +958,22 @@ def run_script(email=True):
     except Exception as e:
         email_error(cs_email, [cs_email], str(e), server=email_server)
     else:
-        if email is True:
+        if test is False:
             try:
                 message_sample = f'ArchivesSpace data audit generated. See attachment.'
                 email_users(cs_email, [cs_email, ks_email, rl_email], f'{spreadsheet_filename}', message_sample,  # ks_email, rl_email
                             files=[spreadsheet_filepath], server=email_server)
             except Exception as e:
                 email_error(cs_email, [cs_email], str(e), server=email_server)
-    # finally:
-    #     try:
-    #         if os.path.exists(spreadsheet_filepath):
-    #             os.remove(spreadsheet_filepath)
-    #         source_eads_path = str(Path.joinpath(Path.cwd(), "source_eads"))
-    #         delete_export_folder(source_eads_path)
-    #     except Exception as e:
-    #         email_error(cs_email, [cs_email], str(e), server=email_server)
+    finally:
+        if test is False:
+            try:
+                if os.path.exists(spreadsheet_filepath):
+                    os.remove(spreadsheet_filepath)
+                source_eads_path = str(Path.joinpath(Path.cwd(), "source_eads"))
+                delete_export_folder(source_eads_path)
+            except Exception as e:
+                email_error(cs_email, [cs_email], str(e), server=email_server)
 
 
 if __name__ == "__main__":
