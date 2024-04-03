@@ -1,4 +1,4 @@
-ArchivesSnake~=0.9.1
+ArchivesSnake~=0.10.1
 argparse~=1.4.0
 lxml~=5.2.0
 mysql~=0.0.3
