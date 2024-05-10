@@ -885,6 +885,15 @@ def run_audit(workbook, spreadsheet):
                        "FROM resource "
                        "JOIN repository ON repository.id = resource.repo_id "
                        "WHERE resource.ead_id is not NULL AND resource.publish is TRUE")
+    othlvl_statement = ("SELECT repository.name AS Repository, resource.title AS Collection_Title, "
+                        "ao.title AS Archival_Object_Title,  ao.ref_id AS Archival_Object_RefID, "
+                        "ev.value AS item_type, ao.other_level AS otherlevel_type "
+                        "FROM archival_object AS ao "
+                        "JOIN repository ON repository.id = ao.repo_id "
+                        "JOIN resource ON resource.id = ao.root_record_id "
+                        "JOIN enumeration_value AS ev ON ev.id = ao.level_id "
+                        "WHERE ao.other_level = 'unspecified' "
+                        "AND ao.level_id = 893")
     queries = {"Component Unique Identifiers": [["Repository", "Resource ID", "RefID", "Archival Object Title",
                                                  "Component Unique Identifier"], cuid_statement, {"resids": True},
                                                 {"booleans": False}],
@@ -905,7 +914,10 @@ def run_audit(workbook, spreadsheet):
                "Arch Objs-Collection Level": [["Repository", "Resource ID", "Archival Object Title", "RefID",
                                                "Level"], aocollevel_statement, {"resids": True}, {"booleans": False}],
                "EAD-IDs": [["Repository", "Resource Title", "Resource ID", "EAD ID"], eadid_statement,
-                           {"resids": True}, {"booleans": False}]}
+                           {"resids": True}, {"booleans": False}],
+               "Otherlevel - Unspecified": [["Repository", "Collection Title", "Archival Object Title",
+                                             "Archival Object RefID", "Item Type", "Otherlevel Type"], othlvl_statement,
+                                            {"resids": False}, {"booleans": False}]}
 
     for term, info in controlled_vocabs.items():
         check_controlled_vocabs(workbook, term, info[0], info[1])
