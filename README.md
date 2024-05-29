@@ -67,6 +67,7 @@ any test should be run with the `-t` or `--test` argument as listed in # Script 
    13. Any XML syntax errors in exported EAD.xml files
    14. Any broken URLs in EAD.xml exports
    15. Any top containers not linked to any resources or archival objects
+   16. Any archival objects with "otherlevel" and "unspecified" level of description
 3. Save the spreadsheet and send an email using email_users(). If an error is generated, send a message to specified 
 user
 4. Delete the spreadsheet and exported EAD.xml folder and files from the server - email if there is an error
