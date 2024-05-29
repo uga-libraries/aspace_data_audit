@@ -4,6 +4,7 @@
 This script is designed to run on a server with access to an ArchivesSpace installation. It runs a series of checks 
 in the ArchivesSpace database, accessing data through the API, and exporting and evaluating EAD.xml files for content 
 and syntax errors. The script then generates an Excel spreadsheet detailing where there are any areas for data cleanup.
+For more information about what data is checked, see the [Workflow](#workflow) section.
 
 ## Getting Started
 
