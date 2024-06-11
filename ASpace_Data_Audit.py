@@ -35,7 +35,7 @@ def connect_aspace_api():
          client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
     """
 
-    client: ASnakeClient = ASnakeClient(baseurl=as_api, username=as_auditor_un, password=as_auditor_pw)
+    client: ASnakeClient = ASnakeClient(baseurl=as_api_stag, username=as_auditor_un, password=as_auditor_pw)
     client.authorize()
     return client
 
@@ -968,15 +968,15 @@ def run_script(test=False):
     try:
         run_audit(audit_workbook, spreadsheet_filename)
     except Exception as e:
-        email_error(cs_email, [cs_email], str(e), server=email_server)
+        email_error(sendfrom_email, senderror_emails, str(e), server=email_server)
     else:
         if test is False:
             try:
                 message_sample = f'ArchivesSpace data audit generated. See attachment.'
-                email_users(cs_email, [cs_email, ks_email, rl_email], f'{spreadsheet_filename}', message_sample,  # ks_email, rl_email
+                email_users(sendfrom_email, sendto_emails, f'{spreadsheet_filename}', message_sample,
                             files=[spreadsheet_filepath], server=email_server)
             except Exception as e:
-                email_error(cs_email, [cs_email], str(e), server=email_server)
+                email_error(sendfrom_email, senderror_emails, str(e), server=email_server)
     finally:
         if test is False:
             try:
@@ -985,7 +985,7 @@ def run_script(test=False):
                 source_eads_path = str(Path.joinpath(Path.cwd(), "source_eads"))
                 delete_export_folder(source_eads_path)
             except Exception as e:
-                email_error(cs_email, [cs_email], str(e), server=email_server)
+                email_error(sendfrom_email, senderror_emails, str(e), server=email_server)
 
 
 if __name__ == "__main__":
