@@ -885,7 +885,7 @@ def run_audit(workbook, spreadsheet):
                        "FROM resource "
                        "JOIN repository ON repository.id = resource.repo_id "
                        "WHERE resource.ead_id is not NULL AND resource.publish is TRUE")
-    othlvl_statement = ("SELECT repository.name AS Repository, resource.title AS Collection_Title, "
+    othlvl_statement = ("SELECT repository.name AS Repository, resource.identifier AS Resource_ID, "
                         "ao.title AS Archival_Object_Title,  ao.ref_id AS Archival_Object_RefID, "
                         "ev.value AS item_type, ao.other_level AS otherlevel_type "
                         "FROM archival_object AS ao "
@@ -915,9 +915,9 @@ def run_audit(workbook, spreadsheet):
                                                "Level"], aocollevel_statement, {"resids": True}, {"booleans": False}],
                "EAD-IDs": [["Repository", "Resource Title", "Resource ID", "EAD ID"], eadid_statement,
                            {"resids": True}, {"booleans": False}],
-               "Otherlevel - Unspecified": [["Repository", "Collection Title", "Archival Object Title",
+               "Otherlevel - Unspecified": [["Repository", "Resource ID", "Archival Object Title",
                                              "Archival Object RefID", "Item Type", "Otherlevel Type"], othlvl_statement,
-                                            {"resids": False}, {"booleans": False}]}
+                                            {"resids": True}, {"booleans": False}]}
 
     for term, info in controlled_vocabs.items():
         check_controlled_vocabs(workbook, term, info[0], info[1])
